@@ -21,6 +21,7 @@ import re
 import sys 
 #for reading operating system data
 import os
+import base64
 #tell our app where our saved model is
 sys.path.append(os.path.abspath("./model"))
 from load import * 
@@ -33,10 +34,12 @@ model, graph = init()
 
 #decoding an image from base64 into raw representation
 def convertImage(imgData1):
+	imgData1 = imgData1.decode("utf-8")
+	#print(imgData1)
 	imgstr = re.search(r'base64,(.*)',imgData1).group(1)
 	#print(imgstr)
 	with open('output.png','wb') as output:
-		output.write(imgstr.decode('base64'))
+		output.write(base64.b64decode(imgstr.encode('utf-8')))
 	
 
 @app.route('/')
@@ -54,7 +57,8 @@ def predict():
 	imgData = request.get_data()
 	#encode it into a suitable format
 	convertImage(imgData)
-	print "debug"
+	print ("debug")
+	print (imgData)
 	#read the image into memory
 	x = imread('output.png',mode='L')
 	#compute a bit-wise inversion so black becomes white and vice versa
@@ -64,14 +68,14 @@ def predict():
 	#imshow(x)
 	#convert to a 4D tensor to feed into our model
 	x = x.reshape(1,28,28,1)
-	print "debug2"
+	print ("debug2")
 	#in our computation graph
 	with graph.as_default():
 		#perform the prediction
 		out = model.predict(x)
 		print(out)
 		print(np.argmax(out,axis=1))
-		print "debug3"
+		print ("debug3")
 		#convert the response to a string
 		response = np.array_str(np.argmax(out,axis=1))
 		return response	
